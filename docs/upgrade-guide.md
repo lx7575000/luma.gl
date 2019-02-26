@@ -32,6 +32,11 @@ with
 import "@luma.gl/debug";
 ```
 
+## AnimationLoop
+
+`AnimationLoop.start()` and `AnimationLoopProxy.start()` now return a `Promise` instead of a reference to itself, so you can no longer chain additional animationLoop calls after `start()`. The return `Promise` resolves when loop initialization completes.
+
+
 ## Buffer
 
 | Removed Method               | Replacement | Reason for Change |

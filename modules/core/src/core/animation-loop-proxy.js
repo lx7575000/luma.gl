@@ -121,23 +121,21 @@ export default class AnimationLoopProxy {
   /* Public methods */
 
   // Starts a render loop if not already running
-  start(opts = {}) {
+  async start(opts = {}) {
     this._stopped = false;
     // console.debug(`Starting ${this.constructor.name}`);
     if (!this._animationFrameId) {
       this.worker.onmessage = this._onMessage;
 
       // Wait for start promise before rendering frame
-      this._startPromise = getPageLoadPromise()
-        .then(() => {
-          this._createAndTransferCanvas(opts);
-          return this.props.onInitialize(this);
-        })
-        .then(() => {
-          if (!this._stopped) {
-            this._animationFrameId = requestAnimationFrame(this._updateFrame);
-          }
-        });
+      await getPageLoadPromise();
+
+      this._createAndTransferCanvas(opts);
+      await this.props.onInitialize(this);
+
+      if (!this._stopped) {
+        this._animationFrameId = requestAnimationFrame(this._updateFrame);
+      }
     }
     return this;
   }

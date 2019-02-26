@@ -101,69 +101,7 @@ export default class AnimationLoop {
 
   // Starts a render loop if not already running
   // @param {Object} context - contains frame specific info (E.g. tick, width, height, etc)
-  start(opts = {}) {
-    this._startLoop(opts);
-    return this;
-  }
-
-  // Redraw now
-  redraw() {
-    this._setupFrame();
-    this._updateCallbackData();
-
-    // call callback
-    this.onRender(this.animationProps);
-    // end callback
-
-    // clear needsRedraw flag
-    this._clearNeedsRedraw();
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/commit
-    // Chrome's offscreen canvas does not require gl.commit
-    if (this.offScreen && this.gl.commit) {
-      this.gl.commit();
-    }
-    return this;
-  }
-
-  // Stops a render loop if already running, finalizing
-  stop() {
-    this._endLoop();
-    return this;
-  }
-
-  onCreateContext(...args) {
-    return this.props.onCreateContext(...args);
-  }
-
-  onInitialize(...args) {
-    return this.props.onInitialize(...args);
-  }
-
-  onRender(...args) {
-    return this.props.onRender(...args);
-  }
-
-  onFinalize(...args) {
-    return this.props.onFinalize(...args);
-  }
-
-  // DEPRECATED/REMOVED METHODS
-
-  getHTMLControlValue(id, defaultValue = 1) {
-    const element = document.getElementById(id);
-    return element ? Number(element.value) : defaultValue;
-  }
-
-  // Update parameters
-  setViewParameters() {
-    log.removed('AnimationLoop.setViewParameters', 'AnimationLoop.setProps')();
-    return this;
-  }
-
-  // PRIVATE METHODS
-
-  async _startLoop(opts) {
+  async start(opts = {}) {
     if (this._running) {
       return;
     }
@@ -204,6 +142,63 @@ export default class AnimationLoop {
     }
   }
 
+  // Stops a render loop if already running, finalizing
+  stop() {
+    this._endRenderLoop();
+    return this;
+  }
+
+  // Draw immediately (i.e. don't wait until next animation frame callback)
+  redraw() {
+    this._setupFrame();
+    this._updateCallbackData();
+
+    // call callback
+    this.onRender(this.animationProps);
+    // end callback
+
+    // clear needsRedraw flag
+    this._clearNeedsRedraw();
+
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/commit
+    // Chrome's offscreen canvas does not require gl.commit
+    if (this.offScreen && this.gl.commit) {
+      this.gl.commit();
+    }
+    return this;
+  }
+
+  onCreateContext(...args) {
+    return this.props.onCreateContext(...args);
+  }
+
+  onInitialize(...args) {
+    return this.props.onInitialize(...args);
+  }
+
+  onRender(...args) {
+    return this.props.onRender(...args);
+  }
+
+  onFinalize(...args) {
+    return this.props.onFinalize(...args);
+  }
+
+  // DEPRECATED/REMOVED METHODS
+
+  getHTMLControlValue(id, defaultValue = 1) {
+    const element = document.getElementById(id);
+    return element ? Number(element.value) : defaultValue;
+  }
+
+  // Update parameters
+  setViewParameters() {
+    log.removed('AnimationLoop.setViewParameters', 'AnimationLoop.setProps')();
+    return this;
+  }
+
+  // PRIVATE METHODS
+
   _startRenderLoop() {
     const renderFrame = () => {
       if (!this._running) {
@@ -218,7 +213,7 @@ export default class AnimationLoop {
     this._animationFrameId = requestAnimationFrame(renderFrame);
   }
 
-  _endLoop() {
+  _endRenderLoop() {
     // console.debug(`Stopping ${this.constructor.name}`);
     if (this._running) {
       this._finalizeCallbackData();
