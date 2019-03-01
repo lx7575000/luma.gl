@@ -2,6 +2,7 @@ import {GLTFParser} from '@loaders.gl/gltf';
 import {AnimationLoop, setParameters, clear, GLTFInstantiator, log} from 'luma.gl';
 import {Matrix4, radians} from 'math.gl';
 import document from 'global/document';
+import WebVRPolyfill from 'webvr-polyfill';
 
 export const GLTF_BASE_URL = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/";
 const GLTF_MODEL_INDEX = `${GLTF_BASE_URL}model-index.json`;
@@ -12,7 +13,7 @@ const INFO_HTML = `
 <div>
   Model
   <select id="modelSelector">
-    <option value="DamagedHelmet/glTF-Binary/DamagedHelmet.glb">Default</option>
+    <option value="Sponza/glTF/Sponza.gltf">Default</option>
   </select>
   <br>
 </div>
@@ -166,6 +167,17 @@ export class DemoApp {
   }
 
   onInitialize({gl, canvas}) {
+    this.frameData = new VRFrameData();
+
+    const polyfill = new WebVRPolyfill({
+      PROVIDE_MOBILE_VRDISPLAY: true
+    });
+
+    navigator.getVRDisplays().then(displays => {
+      this.vrDisplay = displays[displays.length - 1];
+      console.log(this.vrDisplay);
+    });
+
     setParameters(gl, {
       depthTest: true,
       blend: false,
@@ -203,9 +215,18 @@ export class DemoApp {
   }
 
   onRender({gl, time, width, height, aspect}) {
-    gl.viewport(0, 0, width, height);
     clear(gl, {color: [0.2, 0.2, 0.2, 1.0], depth: true});
 
+    this.vrDisplay.getFrameData(this.frameData);
+
+    gl.viewport(0, 0, width * 0.5, height);
+    this.onRenderEye({gl, time}, 'left');
+
+    gl.viewport(width * 0.5, 0, width * 0.5, height);
+    this.onRenderEye({gl, time}, 'right');
+  }
+
+  onRenderEye({gl, time}, eye) {
     const [pitch, roll] = this.rotation;
     const cameraPos = [
       -this.translate * Math.sin(roll) * Math.cos(-pitch),
@@ -213,12 +234,13 @@ export class DemoApp {
       this.translate * Math.cos(roll) * Math.cos(-pitch)
     ];
 
-    const uView = new Matrix4()
-      .translate([0, 0, -this.translate])
-      .rotateX(pitch)
-      .rotateY(roll);
+    const uView = new Matrix4(Array.from(this.frameData[`${eye}ViewMatrix`]));
+      // .translate([0, 0, -this.translate])
+      // .rotateX(pitch)
+      // .rotateY(roll);
 
-    const uProjection = new Matrix4().perspective({fov: radians(40), aspect, near: 0.1, far: 9000});
+    // const uProjection = new Matrix4().perspective({fov: radians(40), aspect, near: 0.1, far: 9000});
+    const uProjection = new Matrix4(Array.from(this.frameData[`${eye}ProjectionMatrix`]));
 
     if (!this.scenes.length) return false;
 
