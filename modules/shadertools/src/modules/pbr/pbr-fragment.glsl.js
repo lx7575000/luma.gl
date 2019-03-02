@@ -211,6 +211,13 @@ float microfacetDistribution(PBRInfo pbrInputs)
   return roughnessSq / (M_PI * f * f);
 }
 
+void applyAmbientLight(inout PBRInfo pbrInputs) {
+  pbrInputs.NdotL = 1.0;
+  pbrInputs.NdotH = 0.0;
+  pbrInputs.LdotH = 0.0;
+  pbrInputs.VdotH = 1.0;
+}
+
 void applyDirectionalLight(inout PBRInfo pbrInputs, vec3 lightDirection) {
   vec3 n = pbrInputs.n;
   vec3 v = pbrInputs.v;
@@ -221,6 +228,11 @@ void applyDirectionalLight(inout PBRInfo pbrInputs, vec3 lightDirection) {
   pbrInputs.NdotH = clamp(dot(n, h), 0.0, 1.0);
   pbrInputs.LdotH = clamp(dot(l, h), 0.0, 1.0);
   pbrInputs.VdotH = clamp(dot(v, h), 0.0, 1.0);
+}
+
+void applyPointLight(inout PBRInfo pbrInputs, PointLight pointLight) {
+  vec3 light_direction = normalize(pointLight.position - pbr_vPosition);
+  applyDirectionalLight(pbrInputs, light_direction);
 }
 
 vec3 calculateFinalColor(PBRInfo pbrInputs, vec3 lightColor) {
@@ -302,11 +314,21 @@ vec4 pbr_filterColor(vec4 colorUnused)
     v
   );
 
-  vec3 color = vec3(0.0, 0.0, 0.0);
+  // Apply ambient light
+  applyAmbientLight(pbrInputs);
+  vec3 color = calculateFinalColor(pbrInputs, lighting_uAmbientLight.color);
 
+  // Apply directional light
   for(int i = 0; i < lighting_uDirectionalLightCount; i++) {
     applyDirectionalLight(pbrInputs, lighting_uDirectionalLight[i].direction);
     color += calculateFinalColor(pbrInputs, lighting_uDirectionalLight[i].color);
+  }
+
+  // Apply point light
+  for(int i = 0; i < lighting_uPointLightCount; i++) {
+    applyPointLight(pbrInputs, lighting_uPointLight[i]);
+    float attenuation = getPointLightAttenuation(lighting_uPointLight[i], distance(lighting_uPointLight[i].position, pbr_vPosition));
+    color += calculateFinalColor(pbrInputs, lighting_uPointLight[i].color / attenuation);
   }
 
   // Calculate lighting contribution from image based lighting source (IBL)

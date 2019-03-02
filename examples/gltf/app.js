@@ -37,8 +37,11 @@ const INFO_HTML = `
   Light
   <select id="lightSelector">
     <option value="default">Default</option>
-    <option value="d1">1x Directional (White)</option>
+    <option value="a">Ambient Only</option>
+    <option value="d1">1x Directional (Red) + Ambient</option>
     <option value="d3">3x Directional (RGB)</option>
+    <option value="p1f">1x Point Light Far (Red) + Ambient</option>
+    <option value="p1c">1x Point Light Close (Red) + Ambient</option>
   </select>
   <br>
 </div>
@@ -232,15 +235,28 @@ export class DemoApp {
           ]
         }
       });
+    } else if (this.light === 'a') {
+      model.updateModuleSettings({
+        lightSources: {
+          ambientLight: {
+              color: [255, 255, 255],
+              intensity: 1.0,
+            }
+        }
+      });
     } else if (this.light === 'd1') {
       model.updateModuleSettings({
         lightSources: {
           directionalLights: [{
-              color: [255, 255, 255],
+              color: [255, 0, 0],
               direction: [1.0, 0.0, 0.0],
               intensity: 1.0,
             }
-          ]
+          ],
+          ambientLight: {
+              color: [255, 255, 255],
+              intensity: 1.0,
+            }
         }
       });
     } else if (this.light === 'd3') {
@@ -260,6 +276,38 @@ export class DemoApp {
               intensity: 1.0,
             }
           ]
+        }
+      });
+    } else if (this.light === 'p1f') {
+      model.updateModuleSettings({
+        lightSources: {
+          pointLights: [{
+              color: [255, 0, 0],
+              position: [200.0, 0.0, 0.0],
+              attenuation: [0, 0, 0.01],
+              intensity: 1.0,
+            }
+          ],
+          ambientLight: {
+              color: [255, 255, 255],
+              intensity: 1.0,
+            }
+        }
+      });
+    } else if (this.light === 'p1c') {
+      model.updateModuleSettings({
+        lightSources: {
+          pointLights: [{
+              color: [255, 0, 0],
+              position: [10.0, 0.0, 0.0],
+              attenuation: [0, 0, 0.01],
+              intensity: 1.0,
+            }
+          ],
+          ambientLight: {
+              color: [255, 255, 255],
+              intensity: 1.0,
+            }
         }
       });
     }
